@@ -1,0 +1,1128 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Calista Hologram</title>
+
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+    background: #020611;
+    font-family: Arial, sans-serif;
+    color: #00f7ff;
+    touch-action: none;
+}
+
+canvas {
+    display: block;
+}
+
+#title {
+    position: absolute;
+    top: 28px;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    letter-spacing: 6px;
+    color: #8dfaff;
+    text-shadow: 0 0 15px #00f7ff;
+    pointer-events: none;
+    z-index: 5;
+}
+
+#instruction {
+    position: absolute;
+    bottom: 30px;
+    width: 100%;
+    text-align: center;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: #8dfaff;
+    text-shadow: 0 0 10px #00f7ff;
+    pointer-events: none;
+    z-index: 5;
+}
+
+#reset {
+    position: absolute;
+    bottom: 70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 20, 35, 0.7);
+    border: 1px solid #00f7ff;
+    color: #00f7ff;
+    padding: 10px 25px;
+    border-radius: 25px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    cursor: pointer;
+    box-shadow: 0 0 15px #00f7ff33;
+    z-index: 5;
+}
+
+#reset:hover {
+    background: #00f7ff22;
+    box-shadow: 0 0 25px #00f7ff66;
+}
+
+#status {
+    position: absolute;
+    top: 75px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 9px;
+    letter-spacing: 3px;
+    color: #4e9eae;
+    pointer-events: none;
+    z-index: 5;
+}
+
+</style>
+</head>
+
+<body>
+
+<div id="title">
+    HOLOGRAPHIC PROJECTION
+</div>
+
+<div id="status">
+    SYSTEM ONLINE // 001
+</div>
+
+<div id="instruction">
+    DRAG SATURN TO REVEAL THE MESSAGE
+</div>
+
+<button id="reset">
+    RESET HOLOGRAM
+</button>
+
+<script type="module">
+
+import * as THREE from
+"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js";
+
+// ==================================================
+// SCENE
+// ==================================================
+
+const scene = new THREE.Scene();
+
+scene.background = new THREE.Color(0x020611);
+
+const camera = new THREE.PerspectiveCamera(
+    55,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    1000
+);
+
+camera.position.set(0, 0, 14);
+
+const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    alpha: true
+});
+
+renderer.setSize(
+    window.innerWidth,
+    window.innerHeight
+);
+
+renderer.setPixelRatio(
+    Math.min(window.devicePixelRatio, 2)
+);
+
+document.body.appendChild(renderer.domElement);
+
+// ==================================================
+// LIGHTING
+// ==================================================
+
+scene.add(
+    new THREE.AmbientLight(0x00ffff, 1.5)
+);
+
+const light = new THREE.PointLight(
+    0x00ffff,
+    5,
+    100
+);
+
+light.position.set(5, 5, 10);
+
+scene.add(light);
+
+// ==================================================
+// SATURN
+// ==================================================
+
+const saturn = new THREE.Group();
+
+scene.add(saturn);
+
+// Planet
+
+const planetGeometry = new THREE.SphereGeometry(
+    2,
+    64,
+    64
+);
+
+const planetMaterial = new THREE.MeshStandardMaterial({
+    color: 0x00dfff,
+    emissive: 0x007788,
+    emissiveIntensity: 1.5,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.9
+});
+
+const planet = new THREE.Mesh(
+    planetGeometry,
+    planetMaterial
+);
+
+saturn.add(planet);
+
+// Planet glow
+
+const glowGeometry = new THREE.SphereGeometry(
+    2.08,
+    32,
+    32
+);
+
+const glowMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00f7ff,
+    transparent: true,
+    opacity: 0.08,
+    side: THREE.BackSide
+});
+
+const glow = new THREE.Mesh(
+    glowGeometry,
+    glowMaterial
+);
+
+saturn.add(glow);
+
+// Saturn rings
+
+const ringGeometry = new THREE.RingGeometry(
+    2.5,
+    3.8,
+    128
+);
+
+const ringMaterial = new THREE.MeshBasicMaterial({
+    color: 0x00f7ff,
+    side: THREE.DoubleSide,
+    transparent: true,
+    opacity: 0.85,
+    wireframe: true
+});
+
+const ring = new THREE.Mesh(
+    ringGeometry,
+    ringMaterial
+);
+
+ring.rotation.x = Math.PI / 2.5;
+
+saturn.add(ring);
+
+// ==================================================
+// COSMIC BACKGROUND
+// ==================================================
+
+// Stars
+
+const starCount = 2200;
+
+const starGeometry = new THREE.BufferGeometry();
+
+const starPositions = [];
+
+const starSizes = [];
+
+for (let i = 0; i < starCount; i++) {
+
+    starPositions.push(
+        (Math.random() - 0.5) * 100,
+        (Math.random() - 0.5) * 100,
+        (Math.random() - 0.5) * 100
+    );
+
+    starSizes.push(
+        Math.random() * 0.04 + 0.01
+    );
+
+}
+
+starGeometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(
+        starPositions,
+        3
+    )
+);
+
+const stars = new THREE.Points(
+    starGeometry,
+    new THREE.PointsMaterial({
+        color: 0x00eaff,
+        size: 0.035,
+        transparent: true,
+        opacity: 0.65
+    })
+);
+
+scene.add(stars);
+
+// ==================================================
+// NEBULA
+// ==================================================
+
+function createNebulaTexture() {
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = 512;
+
+    canvas.height = 512;
+
+    const ctx = canvas.getContext("2d");
+
+    const gradient = ctx.createRadialGradient(
+        256, 256, 10,
+        256, 256, 250
+    );
+
+    gradient.addColorStop(
+        0,
+        "rgba(0, 255, 255, 0.18)"
+    );
+
+    gradient.addColorStop(
+        0.35,
+        "rgba(0, 120, 255, 0.09)"
+    );
+
+    gradient.addColorStop(
+        0.7,
+        "rgba(0, 50, 120, 0.04)"
+    );
+
+    gradient.addColorStop(
+        1,
+        "rgba(0, 0, 0, 0)"
+    );
+
+    ctx.fillStyle = gradient;
+
+    ctx.fillRect(
+        0,
+        0,
+        512,
+        512
+    );
+
+    return new THREE.CanvasTexture(canvas);
+
+}
+
+const nebulaTexture = createNebulaTexture();
+
+const nebulaMaterial = new THREE.SpriteMaterial({
+    map: nebulaTexture,
+    transparent: true,
+    opacity: 0.7,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+
+const nebula = new THREE.Sprite(
+    nebulaMaterial
+);
+
+nebula.scale.set(
+    13,
+    7,
+    1
+);
+
+nebula.position.z = -2;
+
+scene.add(nebula);
+
+// ==================================================
+// ORBITAL RINGS
+// ==================================================
+
+const orbitGroup = new THREE.Group();
+
+scene.add(orbitGroup);
+
+function createOrbit(radius, opacity) {
+
+    const geometry = new THREE.TorusGeometry(
+        radius,
+        0.008,
+        8,
+        200
+    );
+
+    const material = new THREE.MeshBasicMaterial({
+        color: 0x00eaff,
+        transparent: true,
+        opacity: opacity,
+        blending: THREE.AdditiveBlending
+    });
+
+    const orbit = new THREE.Mesh(
+        geometry,
+        material
+    );
+
+    orbitGroup.add(orbit);
+
+    return orbit;
+
+}
+
+const orbit1 = createOrbit(4.7, 0.25);
+
+const orbit2 = createOrbit(5.2, 0.15);
+
+const orbit3 = createOrbit(5.8, 0.08);
+
+orbit1.rotation.x = 0.3;
+
+orbit1.rotation.y = 0.4;
+
+orbit2.rotation.x = -0.5;
+
+orbit2.rotation.y = 0.8;
+
+orbit3.rotation.x = 0.8;
+
+orbit3.rotation.y = -0.3;
+
+// ==================================================
+// HUD DECORATION
+// ==================================================
+
+const hudGroup = new THREE.Group();
+
+scene.add(hudGroup);
+
+function createHUDCircle(
+    x,
+    y,
+    radius,
+    segments = 64
+) {
+
+    const points = [];
+
+    for (let i = 0; i <= segments; i++) {
+
+        const angle =
+            (i / segments) * Math.PI * 2;
+
+        points.push(
+            new THREE.Vector3(
+                Math.cos(angle) * radius,
+                Math.sin(angle) * radius,
+                0
+            )
+        );
+
+    }
+
+    const geometry = new THREE.BufferGeometry()
+        .setFromPoints(points);
+
+    const material = new THREE.LineBasicMaterial({
+        color: 0x00eaff,
+        transparent: true,
+        opacity: 0.25
+    });
+
+    const circle = new THREE.Line(
+        geometry,
+        material
+    );
+
+    circle.position.set(
+        x,
+        y,
+        -0.5
+    );
+
+    hudGroup.add(circle);
+
+    return circle;
+
+}
+
+// Left HUD
+
+createHUDCircle(-5.2, 0, 0.65);
+
+createHUDCircle(-5.2, 0, 0.9);
+
+createHUDCircle(-5.2, 0, 1.1);
+
+// Right HUD
+
+createHUDCircle(5.2, 0, 0.65);
+
+createHUDCircle(5.2, 0, 0.9);
+
+createHUDCircle(5.2, 0, 1.1);
+
+// HUD center points
+
+function createHUDPoint(x, y) {
+
+    const geometry = new THREE.CircleGeometry(
+        0.035,
+        16
+    );
+
+    const material = new THREE.MeshBasicMaterial({
+        color: 0x00f7ff,
+        transparent: true,
+        opacity: 0.8
+    });
+
+    const point = new THREE.Mesh(
+        geometry,
+        material
+    );
+
+    point.position.set(
+        x,
+        y,
+        -0.4
+    );
+
+    hudGroup.add(point);
+
+}
+
+createHUDPoint(-5.2, 0);
+
+createHUDPoint(5.2, 0);
+
+// ==================================================
+// HUD COORDINATE LINES
+// ==================================================
+
+function createLine(
+    x1,
+    y1,
+    x2,
+    y2,
+    opacity = 0.2
+) {
+
+    const points = [
+
+        new THREE.Vector3(x1, y1, -0.5),
+
+        new THREE.Vector3(x2, y2, -0.5)
+
+    ];
+
+    const geometry = new THREE.BufferGeometry()
+        .setFromPoints(points);
+
+    const material = new THREE.LineBasicMaterial({
+        color: 0x00eaff,
+        transparent: true,
+        opacity: opacity
+    });
+
+    const line = new THREE.Line(
+        geometry,
+        material
+    );
+
+    hudGroup.add(line);
+
+}
+
+createLine(-6.5, 0, -4.5, 0);
+
+createLine(4.5, 0, 6.5, 0);
+
+createLine(-5.2, 1.5, -5.2, 1.1);
+
+createLine(-5.2, -1.5, -5.2, -1.1);
+
+createLine(5.2, 1.5, 5.2, 1.1);
+
+createLine(5.2, -1.5, 5.2, -1.1);
+
+// ==================================================
+// PARTICLE TEXT
+// ==================================================
+
+const particleCount = 7000;
+
+const particleGeometry = new THREE.BufferGeometry();
+
+const positions = new Float32Array(
+    particleCount * 3
+);
+
+const startPositions = new Float32Array(
+    particleCount * 3
+);
+
+const targets = new Float32Array(
+    particleCount * 3
+);
+
+// ==================================================
+// GENERATE SATURN PARTICLES
+// ==================================================
+
+function generateSaturnParticle() {
+
+    const isRing = Math.random() > 0.65;
+
+    let x, y, z;
+
+    if (isRing) {
+
+        const angle =
+            Math.random() * Math.PI * 2;
+
+        const radius =
+            2.5 + Math.random() * 1.3;
+
+        x = Math.cos(angle) * radius;
+
+        y = Math.sin(angle) * radius;
+
+        z = (Math.random() - 0.5) * 0.15;
+
+        const tempY =
+            y * Math.cos(Math.PI / 2.5);
+
+        const tempZ =
+            y * Math.sin(Math.PI / 2.5);
+
+        y = tempY;
+
+        z += tempZ;
+
+    } else {
+
+        const u = Math.random() * 2 - 1;
+
+        const angle = Math.random() * Math.PI * 2;
+
+        const radius = 2;
+
+        const sqrt = Math.sqrt(1 - u * u);
+
+        x = radius * sqrt * Math.cos(angle);
+
+        y = radius * sqrt * Math.sin(angle);
+
+        z = radius * u;
+
+    }
+
+    return { x, y, z };
+
+}
+
+// ==================================================
+// TEXT CANVAS
+// ==================================================
+
+const textCanvas = document.createElement("canvas");
+
+textCanvas.width = 1600;
+
+textCanvas.height = 400;
+
+const ctx = textCanvas.getContext("2d");
+
+ctx.clearRect(
+    0,
+    0,
+    textCanvas.width,
+    textCanvas.height
+);
+
+ctx.font = "bold 125px Arial";
+
+ctx.textAlign = "center";
+
+ctx.textBaseline = "middle";
+
+ctx.fillStyle = "#ffffff";
+
+ctx.fillText(
+    "CALISTA PRUT PRUT",
+    800,
+    200
+);
+
+// Read pixels
+
+const imageData = ctx.getImageData(
+    0,
+    0,
+    textCanvas.width,
+    textCanvas.height
+).data;
+
+const textPoints = [];
+
+for (let y = 0; y < textCanvas.height; y += 3) {
+
+    for (let x = 0; x < textCanvas.width; x += 3) {
+
+        const index =
+            (y * textCanvas.width + x) * 4;
+
+        if (imageData[index + 3] > 128) {
+
+            textPoints.push({
+
+                x: (x - 800) / 130,
+
+                y: (200 - y) / 130
+
+            });
+
+        }
+
+    }
+
+}
+
+// ==================================================
+// ASSIGN PARTICLES
+// ==================================================
+
+for (let i = 0; i < particleCount; i++) {
+
+    const index = i * 3;
+
+    const particle = generateSaturnParticle();
+
+    positions[index] = particle.x;
+
+    positions[index + 1] = particle.y;
+
+    positions[index + 2] = particle.z;
+
+    startPositions[index] = particle.x;
+
+    startPositions[index + 1] = particle.y;
+
+    startPositions[index + 2] = particle.z;
+
+    const point = textPoints[
+        Math.floor(
+            Math.random() * textPoints.length
+        )
+    ];
+
+    targets[index] = point.x;
+
+    targets[index + 1] = point.y;
+
+    targets[index + 2] =
+        (Math.random() - 0.5) * 0.25;
+
+}
+
+// ==================================================
+// PARTICLE MATERIAL
+// ==================================================
+
+particleGeometry.setAttribute(
+    "position",
+    new THREE.BufferAttribute(
+        positions,
+        3
+    )
+);
+
+const particleMaterial = new THREE.PointsMaterial({
+
+    color: 0x00f7ff,
+
+    size: 0.035,
+
+    transparent: true,
+
+    opacity: 0.95,
+
+    blending: THREE.AdditiveBlending,
+
+    depthWrite: false
+
+});
+
+const particles = new THREE.Points(
+    particleGeometry,
+    particleMaterial
+);
+
+particles.visible = false;
+
+scene.add(particles);
+
+// ==================================================
+// INTERACTION
+// ==================================================
+
+let isDragging = false;
+
+let isRevealed = false;
+
+let previousX = 0;
+
+let previousY = 0;
+
+let dragDistance = 0;
+
+let explosionProgress = 0;
+
+const revealThreshold = 120;
+
+renderer.domElement.addEventListener(
+    "pointerdown",
+    (event) => {
+
+        if (isRevealed) return;
+
+        isDragging = true;
+
+        previousX = event.clientX;
+
+        previousY = event.clientY;
+
+        dragDistance = 0;
+
+    }
+);
+
+renderer.domElement.addEventListener(
+    "pointermove",
+    (event) => {
+
+        if (!isDragging || isRevealed) return;
+
+        const deltaX =
+            event.clientX - previousX;
+
+        const deltaY =
+            event.clientY - previousY;
+
+        previousX = event.clientX;
+
+        previousY = event.clientY;
+
+        dragDistance += Math.sqrt(
+            deltaX * deltaX +
+            deltaY * deltaY
+        );
+
+        // Rotate Saturn
+
+        saturn.rotation.y += deltaX * 0.01;
+
+        saturn.rotation.x += deltaY * 0.01;
+
+        // Trigger transformation
+
+        if (dragDistance >= revealThreshold) {
+
+            isRevealed = true;
+
+            isDragging = false;
+
+            explosionProgress = 0;
+
+            document.getElementById(
+                "instruction"
+            ).textContent =
+                "HOLOGRAM ACTIVATED";
+
+            document.getElementById(
+                "status"
+            ).textContent =
+                "MESSAGE FOUND // 100%";
+
+        }
+
+    }
+);
+
+window.addEventListener(
+    "pointerup",
+    () => {
+
+        isDragging = false;
+
+    }
+);
+
+// ==================================================
+// RESET
+// ==================================================
+
+document.getElementById("reset")
+.addEventListener("click", () => {
+
+    isRevealed = false;
+
+    isDragging = false;
+
+    dragDistance = 0;
+
+    explosionProgress = 0;
+
+    saturn.rotation.set(0, 0, 0);
+
+    saturn.position.set(0, 0, 0);
+
+    particles.visible = false;
+
+    saturn.visible = true;
+
+    particleMaterial.opacity = 0.95;
+
+    document.getElementById(
+        "instruction"
+    ).textContent =
+        "DRAG SATURN TO REVEAL THE MESSAGE";
+
+    document.getElementById(
+        "status"
+    ).textContent =
+        "SYSTEM ONLINE // 001";
+
+    // Return particles to Saturn
+
+    for (let i = 0; i < particleCount; i++) {
+
+        const index = i * 3;
+
+        positions[index] =
+            startPositions[index];
+
+        positions[index + 1] =
+            startPositions[index + 1];
+
+        positions[index + 2] =
+            startPositions[index + 2];
+
+    }
+
+    particleGeometry.attributes.position
+        .needsUpdate = true;
+
+});
+
+// ==================================================
+// ANIMATION
+// ==================================================
+
+function animate() {
+
+    requestAnimationFrame(animate);
+
+    const time = performance.now() * 0.001;
+
+    // Saturn floating
+
+    if (!isRevealed) {
+
+        saturn.position.y =
+            Math.sin(time) * 0.15;
+
+        if (!isDragging) {
+
+            saturn.rotation.y += 0.002;
+
+        }
+
+    }
+
+    // Nebula breathing
+
+    nebulaMaterial.opacity =
+        0.55 + Math.sin(time * 0.7) * 0.12;
+
+    // Orbital animation
+
+    orbitGroup.rotation.z += 0.0005;
+
+    orbit1.rotation.z += 0.0008;
+
+    orbit2.rotation.z -= 0.0004;
+
+    // HUD rotation
+
+    hudGroup.rotation.z =
+        Math.sin(time * 0.3) * 0.02;
+
+    // Star movement
+
+    stars.rotation.y += 0.0002;
+
+    stars.rotation.x += 0.00005;
+
+    // ==================================================
+    // SATURN TRANSFORMATION
+    // ==================================================
+
+    if (isRevealed) {
+
+        explosionProgress += 0.012;
+
+        const progress = Math.min(
+            explosionProgress,
+            1
+        );
+
+        const eased = progress * progress *
+            (3 - 2 * progress);
+
+        for (let i = 0; i < particleCount; i++) {
+
+            const index = i * 3;
+
+            const sx = startPositions[index];
+
+            const sy = startPositions[index + 1];
+
+            const sz = startPositions[index + 2];
+
+            const tx = targets[index];
+
+            const ty = targets[index + 1];
+
+            const tz = targets[index + 2];
+
+            // Explosion scatter
+
+            const scatter = Math.sin(
+                progress * Math.PI
+            ) * 0.8;
+
+            const randomX =
+                Math.sin(i * 12.9898) * scatter;
+
+            const randomY =
+                Math.cos(i * 78.233) * scatter;
+
+            const randomZ =
+                Math.sin(i * 45.164) * scatter;
+
+            positions[index] =
+                sx * (1 - eased) +
+                tx * eased +
+                randomX;
+
+            positions[index + 1] =
+                sy * (1 - eased) +
+                ty * eased +
+                randomY;
+
+            positions[index + 2] =
+                sz * (1 - eased) +
+                tz * eased +
+                randomZ;
+
+        }
+
+        particleGeometry.attributes.position
+            .needsUpdate = true;
+
+        // Hide Saturn
+
+        saturn.visible = false;
+
+        // Show text particles
+
+        particles.visible = true;
+
+        // Text floating
+
+        particles.position.y =
+            Math.sin(time * 2) * 0.08;
+
+        // Hologram flicker
+
+        particleMaterial.opacity =
+            0.75 + Math.sin(time * 5) * 0.15;
+
+    }
+
+    // ==================================================
+    // RENDER
+    // ==================================================
+
+    renderer.render(
+        scene,
+        camera
+    );
+
+}
+
+// ==================================================
+// RESIZE
+// ==================================================
+
+window.addEventListener(
+    "resize",
+    () => {
+
+        camera.aspect =
+            window.innerWidth /
+            window.innerHeight;
+
+        camera.updateProjectionMatrix();
+
+        renderer.setSize(
+            window.innerWidth,
+            window.innerHeight
+        );
+
+    }
+);
+
+// ==================================================
+// START
+// ==================================================
+
+animate();
+
+</script>
+
+</body>
+</html>
